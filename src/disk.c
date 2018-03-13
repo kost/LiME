@@ -47,9 +47,10 @@ int setup_disk() {
     mm_segment_t fs;
     int err;
 
+#if !defined(__VMKLNX__)
     fs = get_fs();
     set_fs(KERNEL_DS);
-
+#endif
     if (dio && reopen) {
         f = filp_open(path, O_WRONLY | O_CREAT | O_LARGEFILE | O_SYNC | O_DIRECT, 0444);
     } else if (dio) {
@@ -64,13 +65,17 @@ int setup_disk() {
 
     if (!f || IS_ERR(f)) {
         DBG("Error opening file %ld", PTR_ERR(f));
+	#if !defined(__VMKLNX__)
         set_fs(fs);
+	#endif
         err = (f) ? PTR_ERR(f) : -EIO;
         f = NULL;
         return err;
     }
 
+#if !defined(__VMKLNX__)
     set_fs(fs);
+#endif
 
     return 0;
 }
@@ -78,10 +83,14 @@ int setup_disk() {
 void cleanup_disk() {
     mm_segment_t fs;
 
+#if !defined(__VMKLNX__)
     fs = get_fs();
     set_fs(KERNEL_DS);
+#endif
     if(f) filp_close(f, NULL);
+#if !defined(__VMKLNX__)
     set_fs(fs);
+#endif
 }
 
 ssize_t write_vaddr_disk(void * v, size_t is) {
@@ -90,8 +99,10 @@ ssize_t write_vaddr_disk(void * v, size_t is) {
     ssize_t s;
     loff_t pos;
 
+#if !defined(__VMKLNX__)
     fs = get_fs();
     set_fs(KERNEL_DS);
+#endif
 
     pos = f->f_pos;
 
@@ -105,7 +116,9 @@ ssize_t write_vaddr_disk(void * v, size_t is) {
         f->f_pos = pos;
     }
 
+#if !defined(__VMKLNX__)
     set_fs(fs);
+#endif
 
     if (s != is && dio) {
         disable_dio();

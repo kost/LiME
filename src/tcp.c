@@ -75,14 +75,15 @@ int setup_tcp() {
         saddr.sin_addr.s_addr = htonl(INADDR_ANY);
        }
 
-
+#if !defined(__VMKLNX__)
     fs = get_fs();
     set_fs(KERNEL_DS);
 
+    /* not available in vmklnx */
     sock_setsockopt(control, SOL_SOCKET, SO_SNDBUF, (void *) &buffsize, sizeof (int));
 
     set_fs(fs);
-
+#endif
     if (r < 0) {
         DBG("Error setting buffsize %d", r);
         return r;
